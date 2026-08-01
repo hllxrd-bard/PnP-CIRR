@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+config.yaml
+outputs/
+hf_cache/
+milvus_inspection.json

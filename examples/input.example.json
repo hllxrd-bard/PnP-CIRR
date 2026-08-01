@@ -1,0 +1,25 @@
+{
+  "reference": {
+    "id": 123456
+  },
+  "edit_text": "người đàn ông đang cầm micro",
+  "top_k": 60,
+  "use_vlm": false,
+  "edit_strength": 0.7,
+  "search": {
+    "candidate_k_per_query": 150,
+    "max_candidate_pool": 500
+  },
+  "filters": {
+    "exclude_reference": true,
+    "include_video_prefixes": [],
+    "exclude_video_prefixes": [],
+    "exclude_video_names": []
+  },
+  "deduplication": {
+    "enabled": true,
+    "timestamp_window_seconds": 1.5,
+    "max_frames_per_video": 5,
+    "max_frames_per_cluster": null
+  }
+}

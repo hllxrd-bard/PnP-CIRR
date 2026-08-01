@@ -1,0 +1,9 @@
+{
+  "reference": {
+    "video_name": "L29_V001",
+    "frame_name": "000123.jpg"
+  },
+  "edit_text": "same person outdoors at night",
+  "top_k": 60,
+  "use_vlm": true
+}

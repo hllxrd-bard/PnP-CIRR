@@ -1,0 +1,37 @@
+{
+  "reference": {
+    "id": 467812258934155875
+  },
+  "edit_text": "người phụ nữ này đang cắt rau",
+  "top_k": 300,
+  "use_vlm": false,
+  "edit_strength": 0.7,
+  "search": {
+    "candidate_k_per_query": 200,
+    "max_candidate_pool": 500,
+    "strengths": [
+      0.35,
+      0.55,
+      0.75,
+      0.95,
+      1.15
+    ],
+    "geodesic_alphas": [
+      0.25,
+      0.5,
+      0.75
+    ]
+  },
+  "filters": {
+    "exclude_reference": true,
+    "include_video_prefixes": [],
+    "exclude_video_prefixes": [],
+    "exclude_video_names": []
+  },
+  "deduplication": {
+    "enabled": false,
+    "timestamp_window_seconds": 0.0,
+    "max_frames_per_video": 1000,
+    "max_frames_per_cluster": 1000
+  }
+}

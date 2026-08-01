@@ -1,0 +1,48 @@
+{
+  "status": "success",
+  "request": {},
+  "reference": {
+    "id": 123456,
+    "video_name": "L29_V001",
+    "frame_name": "000123.jpg",
+    "timestamp": 12.3,
+    "image_path": "/frames/L29_V001/000123.jpg",
+    "image_url": "/api/frame?video_name=L29_V001&frame_name=000123.jpg"
+  },
+  "query": {
+    "target_text": "người đàn ông đang cầm micro",
+    "used_vlm": false,
+    "candidate_pool_size": 428
+  },
+  "timings_ms": {
+    "reference_lookup": 4.2,
+    "vlm": 0.0,
+    "text_encoding": 18.5,
+    "milvus_search": 42.1,
+    "candidate_fetch": 15.2,
+    "reranking": 3.8,
+    "deduplication": 1.1,
+    "total": 84.9
+  },
+  "warnings": [],
+  "results": [
+    {
+      "rank": 1,
+      "id": 987654,
+      "video_name": "L29_V018",
+      "frame_name": "000456.jpg",
+      "timestamp": 45.6,
+      "score": 0.8421,
+      "scores": {
+        "composed": 0.8612,
+        "target": 0.8344,
+        "reference_keep": 0.7921,
+        "direction": 0.7745,
+        "metadata": 0.8031,
+        "negative_penalty": 0.0
+      },
+      "matched_query": "directional_0.850",
+      "matched_query_strength": 0.85
+    }
+  ]
+}
