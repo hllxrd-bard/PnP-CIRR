@@ -96,6 +96,14 @@ function updateCompositionMode() {
   }
 }
 
+function updateVlmControls() {
+  const provider = $("vlm-provider");
+  const useVlm = $("use-vlm");
+  if (!provider || !useVlm) return;
+  const directional = $("composition-mode").value === "directional";
+  provider.disabled = !directional || !useVlm.checked;
+}
+
 function createPayload() {
   const mode = $("composition-mode").value;
   const editText = $("edit-text").value.trim();
@@ -142,6 +150,9 @@ function createPayload() {
     remove_text: removeText,
     top_k: Number($("top-k").value || 60),
     use_vlm: mode === "directional" && $("use-vlm").checked,
+    vlm_provider: mode === "directional" && $("use-vlm").checked
+      ? $("vlm-provider").value
+      : null,
     edit_strength: strength,
     slerp_alpha: slerpAlpha,
     slerp_remove_gamma: slerpRemoveGamma,
@@ -221,6 +232,11 @@ function renderOutput(output) {
     `strength=${query.selected_strength ?? "n/a"}`,
     `candidate_pool=${query.candidate_pool_size ?? "n/a"}`,
     `used_vlm=${query.used_vlm ?? false}`,
+    query.vlm_provider ? `vlm_provider=${query.vlm_provider}` : null,
+    query.vlm_model ? `vlm_model=${query.vlm_model}` : null,
+    query.vlm_http_latency_ms != null
+      ? `vlm_http=${Number(query.vlm_http_latency_ms).toFixed(1)} ms`
+      : null,
   ].filter(Boolean).join(" | ");
   $("download-json").disabled = false;
   renderMore();
@@ -258,7 +274,11 @@ function downloadJson() {
   URL.revokeObjectURL(url);
 }
 
-$("composition-mode").addEventListener("change", updateCompositionMode);
+$("composition-mode").addEventListener("change", () => {
+  updateCompositionMode();
+  updateVlmControls();
+});
+$("use-vlm").addEventListener("change", updateVlmControls);
 $("edit-text").addEventListener("input", updateCompositionMode);
 $("remove-text").addEventListener("input", updateCompositionMode);
 $("preview-button").addEventListener("click", previewReference);
@@ -267,3 +287,4 @@ $("download-json").addEventListener("click", downloadJson);
 loadMoreButton.addEventListener("click", renderMore);
 
 updateCompositionMode();
+updateVlmControls();

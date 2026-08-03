@@ -185,9 +185,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "vlm": {
         "enabled_by_default": False,
-        "base_url": "http://127.0.0.1:8000/v1",
+        "default_provider": "qwen",
+        "base_url": "http://192.168.20.150:8018/v1",
         "chat_completions_path": "/chat/completions",
-        "api_key": "EMPTY",
+        "api_key": None,
         "model": "Qwen3.5-9B-Q8_0.gguf",
         "timeout_seconds": 20.0,
         "temperature": 0.0,

@@ -71,6 +71,7 @@ class CIRRequest(BaseModel):
     remove_text: str = Field(default="", max_length=2000)
     top_k: int | None = Field(default=None, ge=1, le=1000)
     use_vlm: bool | None = None
+    vlm_provider: Literal["qwen", "gemini"] | None = None
     edit_strength: float | None = Field(default=None, ge=-3.0, le=5.0)
     search: SearchOverrides = Field(default_factory=SearchOverrides)
     filters: FilterInput = Field(default_factory=FilterInput)

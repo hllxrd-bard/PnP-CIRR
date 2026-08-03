@@ -235,6 +235,7 @@ class CIREngine:
                         f"{vlm_instruction}\n{suffix}" if vlm_instruction else suffix
                     )
                 vlm_payload = self.vlm.rewrite(
+                    provider=request.vlm_provider,
                     edit_text=vlm_instruction,
                     source_text=raw_source_text,
                     image_path=reference_path,
@@ -477,6 +478,15 @@ class CIREngine:
                 "operation": composed.operation,
                 "selected_strength": composed.selected_strength,
                 "used_vlm": bool(vlm_payload),
+                "vlm_provider": (
+                    ((vlm_payload or {}).get("_meta") or {}).get("provider")
+                ),
+                "vlm_model": (
+                    ((vlm_payload or {}).get("_meta") or {}).get("model")
+                ),
+                "vlm_http_latency_ms": (
+                    ((vlm_payload or {}).get("_meta") or {}).get("latency_ms")
+                ),
                 "vlm_output": vlm_payload,
                 "remove_objects": remove_texts,
                 "expanded_remove_objects": expanded_remove_texts,

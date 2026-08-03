@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title }}</title>
-  <link rel="stylesheet" href="/static/style.css?v=slerp-remove-v2">
+  <link rel="stylesheet" href="/static/style.css?v=vlm-providers-v1">
 </head>
 <body data-page-size="{{ page_size }}">
   <header>
@@ -95,7 +95,14 @@
         <summary>Advanced</summary>
         <label class="checkbox-label">
           <input id="use-vlm" type="checkbox" {% if vlm_default %}checked{% endif %}>
-          VLM assist cho edit mơ hồ — chậm hơn khoảng vài giây ({{ vlm_model }})
+          VLM assist cho edit mơ hồ — chậm hơn khoảng vài giây
+        </label>
+        <label id="vlm-provider-group">VLM provider
+          <select id="vlm-provider">
+            <option value="qwen" {% if default_vlm_provider == "qwen" %}selected{% endif %}>Qwen 3.5 9B local ({{ qwen_vlm_model }})</option>
+            <option value="gemini" {% if default_vlm_provider == "gemini" %}selected{% endif %}>Gemini API ({{ gemini_vlm_model }})</option>
+          </select>
+          <small>API key Gemini chỉ được đọc từ biến môi trường GEMINI_API_KEY ở backend.</small>
         </label>
         <p class="help-text">Mặc định không bật. Các ô Edit/Add và Remove rõ ràng không cần VLM.</p>
       </details>
@@ -147,6 +154,6 @@
     </article>
   </template>
 
-  <script src="/static/app.js?v=slerp-remove-v2"></script>
+  <script src="/static/app.js?v=vlm-providers-v1"></script>
 </body>
 </html>

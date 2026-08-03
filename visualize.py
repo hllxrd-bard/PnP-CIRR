@@ -54,6 +54,16 @@ def create_app(config: AppConfig, warmup: bool = True) -> FastAPI:
                 "page_size": config.get("web.page_size", 30),
                 "vlm_default": config.get("vlm.enabled_by_default", False),
                 "vlm_model": config.get("vlm.model"),
+            "default_vlm_provider": config.get(
+                "vlm.default_provider", "qwen"
+            ),
+            "qwen_vlm_model": config.get(
+                "vlm.providers.qwen.model",
+                config.get("vlm.model", "Qwen3.5-9B-Q8_0.gguf"),
+            ),
+            "gemini_vlm_model": config.get(
+                "vlm.providers.gemini.model", "gemini-3.6-flash"
+            ),
             },
         )
 
