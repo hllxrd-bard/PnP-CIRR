@@ -874,3 +874,32 @@ reference image embedding
 ```
 
 Nó không gọi VLM, không dùng directional `add-remove`, không dùng removal penalty, edit gate hoặc TAT/LoRA.
+
+---
+
+## SLERP spherical remove (experimental)
+
+Ba composition mode được tách riêng:
+
+- `directional`: pipeline Add/Remove hiện tại, không thay đổi;
+- `slerp`: pure training-free SLERP giữa reference image và positive `edit_text`;
+- `slerp_remove`: tạo positive anchor tùy chọn bằng SLERP, sau đó đi khỏi
+  `remove_text` theo một geodesic angle `slerp_remove_gamma`.
+
+Remove-only:
+
+```text
+q = spherical_move_away(reference, remove, gamma)
+```
+
+Add + Remove:
+
+```text
+anchor = slerp(reference, add, alpha)
+q = spherical_move_away(anchor, remove, gamma)
+```
+
+`gamma` là góc tính theo radian; vùng thử ban đầu nên là `0.10–0.30`.
+Đây là extension training-free để thử nghiệm, không phải công thức remove được
+đề xuất trong paper SLERP-TAT.
+

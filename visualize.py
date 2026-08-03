@@ -50,6 +50,7 @@ def create_app(config: AppConfig, warmup: bool = True) -> FastAPI:
                 "default_edit_strength": config.get("composition.default_edit_strength", 0.95),
                 "default_composition_mode": config.get("slerp.default_mode", "directional"),
                 "default_slerp_alpha": config.get("slerp.default_alpha", 0.8),
+                "default_slerp_remove_gamma": config.get("slerp_remove.default_gamma", 0.2),
                 "page_size": config.get("web.page_size", 30),
                 "vlm_default": config.get("vlm.enabled_by_default", False),
                 "vlm_model": config.get("vlm.model"),

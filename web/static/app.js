@@ -71,42 +71,50 @@ function splitRemoveObjects(value) {
     .filter(Boolean);
 }
 
-function buildSlerpIntent(editText, removeText) {
-  const edit = editText.trim();
-  const remove = splitRemoveObjects(removeText).join(" and ");
-  if (edit && remove) return `${edit} without ${remove}`;
-  if (edit) return edit;
-  if (remove) return `the same scene without ${remove}`;
-  return "";
+function buildPureSlerpIntent(editText) {
+  return editText.trim();
 }
 
 function updateCompositionMode() {
   const mode = $("composition-mode").value;
-  const isSlerp = mode === "slerp";
-  $("directional-strength-group").hidden = isSlerp;
-  $("slerp-alpha-group").hidden = !isSlerp;
-  $("advanced-options").hidden = isSlerp;
-  $("slerp-intent-preview").hidden = !isSlerp;
-  if (isSlerp) {
+  const isDirectional = mode === "directional";
+  const isPureSlerp = mode === "slerp";
+  const isSlerpRemove = mode === "slerp_remove";
+  $("directional-strength-group").hidden = !isDirectional;
+  $("slerp-alpha-group").hidden = !(isPureSlerp || isSlerpRemove);
+  $("slerp-remove-gamma-group").hidden = !isSlerpRemove;
+  $("remove-field-group").hidden = isPureSlerp;
+  $("advanced-options").hidden = !isDirectional;
+  $("slerp-intent-preview").hidden = !isPureSlerp;
+  if (!isDirectional) {
     $("use-vlm").checked = false;
-    $("slerp-intent-text").textContent = buildSlerpIntent(
+  }
+  if (isPureSlerp) {
+    $("slerp-intent-text").textContent = buildPureSlerpIntent(
       $("edit-text").value,
-      $("remove-text").value,
-    ) || "(nhập Edit/Add hoặc Remove)";
+    ) || "(nhập positive textual intent trong Edit/Add)";
   }
 }
 
 function createPayload() {
+  const mode = $("composition-mode").value;
   const editText = $("edit-text").value.trim();
-  const removeText = $("remove-text").value.trim();
-  if (!editText && !removeText) {
+  const rawRemoveText = $("remove-text").value.trim();
+  const removeText = mode === "slerp" ? "" : rawRemoveText;
+
+  if (mode === "slerp" && !editText) {
+    throw new Error("Pure SLERP cần positive textual intent trong Edit/Add.");
+  }
+  if (mode === "slerp_remove" && !removeText) {
+    throw new Error("SLERP Remove cần ít nhất một Remove concept.");
+  }
+  if (mode === "directional" && !editText && !removeText) {
     throw new Error("Hãy nhập ít nhất một ô Edit/Add hoặc Remove.");
   }
 
-  const mode = $("composition-mode").value;
   let strength = null;
   let slerpAlpha = null;
-
+  let slerpRemoveGamma = null;
   if (mode === "directional") {
     const strengthText = $("edit-strength").value.trim();
     if (!strengthText) throw new Error("Hãy chọn Edit strength.");
@@ -119,8 +127,14 @@ function createPayload() {
     if (!Number.isFinite(slerpAlpha) || slerpAlpha < 0 || slerpAlpha > 1) {
       throw new Error("SLERP alpha phải là số trong khoảng 0 đến 1.");
     }
+    if (mode === "slerp_remove") {
+      slerpRemoveGamma = Number($("slerp-remove-gamma").value);
+      if (!Number.isFinite(slerpRemoveGamma) || slerpRemoveGamma < 0 || slerpRemoveGamma > 1.5) {
+        throw new Error("Spherical remove gamma phải là số trong khoảng 0 đến 1.5.");
+      }
+      if (!editText) slerpAlpha = null;
+    }
   }
-
   return {
     reference: parseReference(),
     composition_mode: mode,
@@ -130,6 +144,7 @@ function createPayload() {
     use_vlm: mode === "directional" && $("use-vlm").checked,
     edit_strength: strength,
     slerp_alpha: slerpAlpha,
+    slerp_remove_gamma: slerpRemoveGamma,
     deduplication: { enabled: $("deduplicate").checked },
   };
 }
@@ -198,6 +213,7 @@ function renderOutput(output) {
     `mode=${query.composition_mode || output.request?.composition_mode || "directional"}`,
     query.intent_text ? `intent=${query.intent_text}` : null,
     query.slerp_alpha != null ? `alpha=${query.slerp_alpha}` : null,
+    query.slerp_remove_gamma != null ? `gamma=${query.slerp_remove_gamma}` : null,
     `edit_add=${query.edit_text || "none"}`,
     `remove=${(query.remove_objects || []).join(", ") || "none"}`,
     `expanded_remove=${(query.expanded_remove_objects || []).join(", ") || "none"}`,

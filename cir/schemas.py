@@ -60,8 +60,9 @@ class CIRRequest(BaseModel):
 
     reference: ReferenceInput
     # Retrieval method selector. Directional remains the backward-compatible default.
-    composition_mode: Literal["directional", "slerp"] = "directional"
+    composition_mode: Literal["directional", "slerp", "slerp_remove"] = "directional"
     slerp_alpha: float | None = Field(default=None, ge=0.0, le=1.0)
+    slerp_remove_gamma: float | None = Field(default=None, ge=0.0, le=1.5)
     # New explicit UI/API semantics:
     # - edit_text: what should be added or changed to
     # - remove_text: what should be removed
@@ -81,6 +82,13 @@ class CIRRequest(BaseModel):
         self.remove_text = str(self.remove_text or "").strip()
         if not self.edit_text and not self.remove_text:
             raise ValueError("At least one of edit_text or remove_text must be non-empty.")
+        if self.composition_mode == "slerp":
+            if not self.edit_text:
+                raise ValueError("Pure SLERP requires non-empty edit_text textual intent.")
+            if self.remove_text:
+                raise ValueError("Pure SLERP does not accept remove_text; use slerp_remove.")
+        if self.composition_mode == "slerp_remove" and not self.remove_text:
+            raise ValueError("SLERP Remove requires remove_text.")
         return self
 
 

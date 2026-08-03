@@ -1,11 +1,13 @@
 {
   "reference": {
-    "path": "/absolute/path/to/reference.webp"
+    "video_name": "L30_V013",
+    "frame_name": "frame_017.webp"
   },
-  "composition_mode": "slerp",
+  "composition_mode": "slerp_remove",
   "edit_text": "pond",
   "remove_text": "lotus flowers",
-  "slerp_alpha": 0.8,
+  "slerp_alpha": 0.4,
+  "slerp_remove_gamma": 0.2,
   "top_k": 60,
   "use_vlm": false,
   "deduplication": {

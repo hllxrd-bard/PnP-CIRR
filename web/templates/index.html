@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title }}</title>
-  <link rel="stylesheet" href="/static/style.css?v=slerp-training-free-v1">
+  <link rel="stylesheet" href="/static/style.css?v=slerp-remove-v2">
 </head>
 <body data-page-size="{{ page_size }}">
   <header>
@@ -40,8 +40,9 @@
           <select id="composition-mode">
             <option value="directional" {% if default_composition_mode == "directional" %}selected{% endif %}>Directional Add/Remove (current)</option>
             <option value="slerp" {% if default_composition_mode == "slerp" %}selected{% endif %}>SLERP training-free</option>
+            <option value="slerp_remove" {% if default_composition_mode == "slerp_remove" %}selected{% endif %}>SLERP spherical remove (experimental)</option>
           </select>
-          <small>Directional giữ nguyên pipeline hiện tại. SLERP dùng một textual intent và một cosine query.</small>
+          <small>Directional giữ nguyên pipeline hiện tại. Pure SLERP dùng positive textual intent. SLERP Remove đi khỏi negative concept trên mặt cầu.</small>
         </label>
         <div id="slerp-intent-preview" class="intent-preview" hidden>
           <strong>SLERP textual intent</strong>
@@ -55,7 +56,7 @@
           <small>Phần muốn thêm hoặc trạng thái muốn đổi thành. Có thể để trống khi chỉ muốn xóa.</small>
         </label>
 
-        <label class="wide">Remove
+        <label id="remove-field-group" class="wide">Remove
           <textarea id="remove-text" rows="3" placeholder="Ví dụ: hat hoặc hat, cap, headwear"></textarea>
           <small>Nhập vật thể/thuộc tính cần bỏ. Có thể nhập nhiều mục, phân cách bằng dấu phẩy.</small>
         </label>
@@ -78,7 +79,11 @@
         </label>
         <label id="slerp-alpha-group" hidden>SLERP text balance α
           <input id="slerp-alpha" type="number" min="0" max="1" step="0.05" value="{{ default_slerp_alpha }}">
-          <small>0 = image-only; 1 = text-only; paper thường dùng 0.8–0.9.</small>
+          <small>Pure SLERP: image→text. SLERP Remove: chỉ dùng khi Edit/Add không trống.</small>
+        </label>
+        <label id="slerp-remove-gamma-group" hidden>Spherical remove γ
+          <input id="slerp-remove-gamma" type="number" min="0" max="1.5" step="0.05" value="{{ default_slerp_remove_gamma }}">
+          <small>Góc đi khỏi Remove trên mặt cầu; 0.10–0.30 là vùng thử ban đầu.</small>
         </label>
         <label class="checkbox-label">
           <input id="deduplicate" type="checkbox" checked>
@@ -142,6 +147,6 @@
     </article>
   </template>
 
-  <script src="/static/app.js?v=slerp-training-free-v1"></script>
+  <script src="/static/app.js?v=slerp-remove-v2"></script>
 </body>
 </html>

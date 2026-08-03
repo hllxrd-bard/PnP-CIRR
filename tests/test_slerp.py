@@ -7,7 +7,6 @@ import pytest
 from cir.config import AppConfig, DEFAULT_CONFIG
 from cir.schemas import CIRRequest
 from cir.slerp_method.composer import spherical_linear_interpolation
-from cir.slerp_method.intent_builder import build_slerp_intent
 from cir.slerp_method.scorer import rank_candidates_by_slerp_cosine
 
 
@@ -43,14 +42,6 @@ def test_slerp_alpha_validation():
         spherical_linear_interpolation(vector, vector, 1.01)
 
 
-def test_intent_builder_uses_one_full_textual_intent():
-    replace = build_slerp_intent("pond", "lotus flowers, lotus leaves")
-    assert replace.text == "pond without lotus flowers and lotus leaves"
-    assert replace.remove_objects == ["lotus flowers", "lotus leaves"]
-
-    remove_only = build_slerp_intent("", "hat")
-    assert remove_only.text == "the same scene without hat"
-
 
 def test_schema_defaults_to_directional_and_accepts_slerp():
     legacy = CIRRequest.model_validate(
@@ -63,7 +54,7 @@ def test_schema_defaults_to_directional_and_accepts_slerp():
             "reference": {"id": 1},
             "composition_mode": "slerp",
             "edit_text": "pond",
-            "remove_text": "lotus",
+            "remove_text": "",
             "slerp_alpha": 0.8,
         }
     )
@@ -148,7 +139,7 @@ def test_pure_slerp_pipeline_uses_one_milvus_query_and_no_directional_reranker()
 
     class FakeEncoder:
         def encode_texts(self, texts):
-            assert texts == ["pond without lotus"]
+            assert texts == ["pond"]
             return np.asarray([[0.0, 1.0]], dtype=np.float32)
 
     class FakeDeduplicator:
@@ -181,7 +172,7 @@ def test_pure_slerp_pipeline_uses_one_milvus_query_and_no_directional_reranker()
             "reference": {"id": 1},
             "composition_mode": "slerp",
             "edit_text": "pond",
-            "remove_text": "lotus",
+            "remove_text": "",
             "slerp_alpha": 0.8,
             "top_k": 2,
             "use_vlm": True,
@@ -192,7 +183,7 @@ def test_pure_slerp_pipeline_uses_one_milvus_query_and_no_directional_reranker()
 
     assert len(engine.store.query_vectors) == 1
     assert output.query["composition_mode"] == "slerp"
-    assert output.query["intent_text"] == "pond without lotus"
+    assert output.query["intent_text"] == "pond"
     assert output.query["used_vlm"] is False
     assert output.results[0].id == 3
     assert output.results[0].matched_query == "slerp_0.800"

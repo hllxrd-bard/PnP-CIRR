@@ -106,6 +106,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "max_candidate_pool": 500,
         "epsilon": 1e-8,
     },
+    "slerp_remove": {
+        "default_add_alpha": 0.4,
+        "default_gamma": 0.2,
+        "candidate_k": 250,
+        "max_candidate_pool": 250,
+        "epsilon": 1e-8,
+    },
     "retrieval": {
         "candidate_k_per_query": 150,
         "max_candidate_pool": 700,

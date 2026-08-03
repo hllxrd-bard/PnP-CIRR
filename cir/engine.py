@@ -14,6 +14,7 @@ from .milvus_store import MilvusStore
 from .query_composer import QueryComposer
 from .reranker import VectorReranker
 from .slerp_method.pipeline import search_slerp
+from .slerp_method.remove_pipeline import search_slerp_remove
 from .schemas import (
     CIRRequest,
     CIROutput,
@@ -181,6 +182,8 @@ class CIREngine:
     def search(self, request: CIRRequest) -> CIROutput:
         if request.composition_mode == "slerp":
             return search_slerp(self, request)
+        if request.composition_mode == "slerp_remove":
+            return search_slerp_remove(self, request)
 
         started = time.perf_counter()
         timing = TimingInfo()

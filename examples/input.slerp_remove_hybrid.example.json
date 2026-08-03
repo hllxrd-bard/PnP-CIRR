@@ -1,0 +1,16 @@
+{
+  "reference": {
+    "video_name": "L30_V071",
+    "frame_name": "frame_034"
+  },
+  "composition_mode": "slerp_remove",
+  "edit_text": "pond",
+  "remove_text": "lotus",
+  "slerp_alpha": 0.4,
+  "slerp_remove_gamma": 0.4,
+  "top_k": 60,
+  "use_vlm": false,
+  "deduplication": {
+    "enabled": true
+  }
+}

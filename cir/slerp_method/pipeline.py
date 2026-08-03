@@ -13,7 +13,6 @@ from ..schemas import (
 )
 from ..utils import build_image_url, first_nonempty_text
 from .composer import spherical_linear_interpolation
-from .intent_builder import build_slerp_intent
 from .scorer import rank_candidates_by_slerp_cosine
 
 if TYPE_CHECKING:
@@ -35,7 +34,11 @@ def search_slerp(engine: "CIREngine", request: CIRRequest) -> CIROutput:
     reference_entity, reference_vector, reference_path = engine._resolve_reference(request)
     timing.reference_lookup = (time.perf_counter() - lookup_started) * 1000.0
 
-    intent = build_slerp_intent(request.edit_text, request.remove_text)
+    intent_text = str(request.edit_text or "").strip()
+    if not intent_text:
+        raise ValueError("Pure SLERP requires a non-empty textual intent in Edit/Add.")
+    if str(request.remove_text or "").strip():
+        raise ValueError("Pure SLERP does not accept Remove; use slerp_remove mode.")
     alpha = (
         float(request.slerp_alpha)
         if request.slerp_alpha is not None
@@ -45,7 +48,7 @@ def search_slerp(engine: "CIREngine", request: CIRRequest) -> CIROutput:
         warnings.append("SLERP mode ignores use_vlm=true and remains training-free.")
 
     text_started = time.perf_counter()
-    intent_vector = engine.encoder.encode_texts([intent.text])[0]
+    intent_vector = engine.encoder.encode_texts([intent_text])[0]
     timing.text_encoding = (time.perf_counter() - text_started) * 1000.0
 
     if intent_vector.size != reference_vector.size:
@@ -64,10 +67,23 @@ def search_slerp(engine: "CIREngine", request: CIRRequest) -> CIROutput:
     )
     query_name = f"slerp_{alpha:.3f}"
 
-    candidate_k = int(
+    requested_candidate_k = int(
         request.search.candidate_k_per_query
         or engine.config.get("slerp.candidate_k", 300)
     )
+    hnsw_ef = engine.config.get("milvus.search.params.ef")
+    candidate_k = requested_candidate_k
+    if hnsw_ef is not None:
+        try:
+            safe_k = max(1, int(hnsw_ef) - 1)
+        except (TypeError, ValueError):
+            safe_k = requested_candidate_k
+        if candidate_k > safe_k:
+            warnings.append(
+                f"Pure SLERP candidate_k was clamped from {candidate_k} to {safe_k} "
+                f"because Milvus HNSW ef={hnsw_ef}."
+            )
+            candidate_k = safe_k
     max_pool = int(
         request.search.max_candidate_pool
         or engine.config.get("slerp.max_candidate_pool", candidate_k)
@@ -198,16 +214,16 @@ def search_slerp(engine: "CIREngine", request: CIRRequest) -> CIROutput:
             "composition_mode": "slerp",
             "original_edit_text": request.edit_text,
             "original_remove_text": request.remove_text,
-            "intent_text": intent.text,
-            "edit_text": intent.edit_text or None,
-            "target_text": intent.text,
+            "intent_text": intent_text,
+            "edit_text": intent_text,
+            "target_text": intent_text,
             "operation": "slerp",
             "selected_strength": None,
             "slerp_alpha": alpha,
             "used_vlm": False,
             "vlm_output": None,
-            "remove_objects": intent.remove_objects,
-            "expanded_remove_objects": intent.remove_objects,
+            "remove_objects": [],
+            "expanded_remove_objects": [],
             "negative_texts": [],
             "query_vectors": [{"name": query_name, "strength": alpha}],
             "candidate_pool_size": len(candidates),
