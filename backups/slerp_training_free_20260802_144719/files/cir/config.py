@@ -99,13 +99,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "use_geodesic_queries": False,
         "epsilon": 1e-8,
     },
-    "slerp": {
-        "default_mode": "directional",
-        "default_alpha": 0.8,
-        "candidate_k": 300,
-        "max_candidate_pool": 500,
-        "epsilon": 1e-8,
-    },
     "retrieval": {
         "candidate_k_per_query": 150,
         "max_candidate_pool": 700,

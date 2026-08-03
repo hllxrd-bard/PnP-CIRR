@@ -841,36 +841,3 @@ web:
 ```
 
 Nên thêm authentication, request size limit và path validation ở tầng backend/reverse proxy.
-
----
-
-## Training-free SLERP mode
-
-<!-- PNP_CIRR_SLERP_TRAINING_FREE_V1 -->
-
-SLERP được triển khai tách biệt trong `cir/slerp_method/`. Pipeline directional cũ vẫn là mặc định và không đổi hành vi.
-
-Request chọn method bằng:
-
-```json
-{
-  "composition_mode": "slerp",
-  "edit_text": "pond",
-  "remove_text": "lotus flowers",
-  "slerp_alpha": 0.8
-}
-```
-
-SLERP mode thực hiện:
-
-```text
-reference image embedding
-+ one deterministic textual-intent embedding
-→ spherical linear interpolation
-→ one Milvus cosine search
-→ exact local cosine reranking
-→ deduplication
-→ Top-K
-```
-
-Nó không gọi VLM, không dùng directional `add-remove`, không dùng removal penalty, edit gate hoặc TAT/LoRA.

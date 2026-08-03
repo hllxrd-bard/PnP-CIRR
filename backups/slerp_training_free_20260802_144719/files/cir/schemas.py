@@ -59,9 +59,6 @@ class CIRRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     reference: ReferenceInput
-    # Retrieval method selector. Directional remains the backward-compatible default.
-    composition_mode: Literal["directional", "slerp"] = "directional"
-    slerp_alpha: float | None = Field(default=None, ge=0.0, le=1.0)
     # New explicit UI/API semantics:
     # - edit_text: what should be added or changed to
     # - remove_text: what should be removed

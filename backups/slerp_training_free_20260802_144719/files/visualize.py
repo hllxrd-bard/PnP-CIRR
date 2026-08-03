@@ -48,8 +48,6 @@ def create_app(config: AppConfig, warmup: bool = True) -> FastAPI:
                 "title": config.get("web.title", "Interactive CIR Viewer"),
                 "default_top_k": config.get("retrieval.default_top_k", 60),
                 "default_edit_strength": config.get("composition.default_edit_strength", 0.95),
-                "default_composition_mode": config.get("slerp.default_mode", "directional"),
-                "default_slerp_alpha": config.get("slerp.default_alpha", 0.8),
                 "page_size": config.get("web.page_size", 30),
                 "vlm_default": config.get("vlm.enabled_by_default", False),
                 "vlm_model": config.get("vlm.model"),

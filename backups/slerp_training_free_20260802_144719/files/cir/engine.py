@@ -13,7 +13,6 @@ from .encoder import Siglip2Encoder
 from .milvus_store import MilvusStore
 from .query_composer import QueryComposer
 from .reranker import VectorReranker
-from .slerp_method.pipeline import search_slerp
 from .schemas import (
     CIRRequest,
     CIROutput,
@@ -179,9 +178,6 @@ class CIREngine:
         return video_name not in set(request.filters.exclude_video_names)
 
     def search(self, request: CIRRequest) -> CIROutput:
-        if request.composition_mode == "slerp":
-            return search_slerp(self, request)
-
         started = time.perf_counter()
         timing = TimingInfo()
         warnings: list[str] = []

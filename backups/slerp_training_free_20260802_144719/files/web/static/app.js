@@ -64,38 +64,6 @@ async function previewReference() {
   }
 }
 
-function splitRemoveObjects(value) {
-  return value
-    .split(/[,;|\n\r]+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function buildSlerpIntent(editText, removeText) {
-  const edit = editText.trim();
-  const remove = splitRemoveObjects(removeText).join(" and ");
-  if (edit && remove) return `${edit} without ${remove}`;
-  if (edit) return edit;
-  if (remove) return `the same scene without ${remove}`;
-  return "";
-}
-
-function updateCompositionMode() {
-  const mode = $("composition-mode").value;
-  const isSlerp = mode === "slerp";
-  $("directional-strength-group").hidden = isSlerp;
-  $("slerp-alpha-group").hidden = !isSlerp;
-  $("advanced-options").hidden = isSlerp;
-  $("slerp-intent-preview").hidden = !isSlerp;
-  if (isSlerp) {
-    $("use-vlm").checked = false;
-    $("slerp-intent-text").textContent = buildSlerpIntent(
-      $("edit-text").value,
-      $("remove-text").value,
-    ) || "(nhập Edit/Add hoặc Remove)";
-  }
-}
-
 function createPayload() {
   const editText = $("edit-text").value.trim();
   const removeText = $("remove-text").value.trim();
@@ -103,33 +71,20 @@ function createPayload() {
     throw new Error("Hãy nhập ít nhất một ô Edit/Add hoặc Remove.");
   }
 
-  const mode = $("composition-mode").value;
-  let strength = null;
-  let slerpAlpha = null;
-
-  if (mode === "directional") {
-    const strengthText = $("edit-strength").value.trim();
-    if (!strengthText) throw new Error("Hãy chọn Edit strength.");
-    strength = Number(strengthText);
-    if (!Number.isFinite(strength) || strength < -3 || strength > 5) {
-      throw new Error("Edit strength phải là số trong khoảng -3 đến 5.");
-    }
-  } else {
-    slerpAlpha = Number($("slerp-alpha").value);
-    if (!Number.isFinite(slerpAlpha) || slerpAlpha < 0 || slerpAlpha > 1) {
-      throw new Error("SLERP alpha phải là số trong khoảng 0 đến 1.");
-    }
+  const strengthText = $("edit-strength").value.trim();
+  if (!strengthText) throw new Error("Hãy chọn Edit strength.");
+  const strength = Number(strengthText);
+  if (!Number.isFinite(strength) || strength < -3 || strength > 5) {
+    throw new Error("Edit strength phải là số trong khoảng -3 đến 5.");
   }
 
   return {
     reference: parseReference(),
-    composition_mode: mode,
     edit_text: editText,
     remove_text: removeText,
     top_k: Number($("top-k").value || 60),
-    use_vlm: mode === "directional" && $("use-vlm").checked,
+    use_vlm: $("use-vlm").checked,
     edit_strength: strength,
-    slerp_alpha: slerpAlpha,
     deduplication: { enabled: $("deduplicate").checked },
   };
 }
@@ -195,9 +150,6 @@ function renderOutput(output) {
   $("warnings").textContent = (output.warnings || []).join(" | ");
   const query = output.query || {};
   $("query-info").textContent = [
-    `mode=${query.composition_mode || output.request?.composition_mode || "directional"}`,
-    query.intent_text ? `intent=${query.intent_text}` : null,
-    query.slerp_alpha != null ? `alpha=${query.slerp_alpha}` : null,
     `edit_add=${query.edit_text || "none"}`,
     `remove=${(query.remove_objects || []).join(", ") || "none"}`,
     `expanded_remove=${(query.expanded_remove_objects || []).join(", ") || "none"}`,
@@ -205,7 +157,7 @@ function renderOutput(output) {
     `strength=${query.selected_strength ?? "n/a"}`,
     `candidate_pool=${query.candidate_pool_size ?? "n/a"}`,
     `used_vlm=${query.used_vlm ?? false}`,
-  ].filter(Boolean).join(" | ");
+  ].join(" | ");
   $("download-json").disabled = false;
   renderMore();
 }
@@ -242,12 +194,7 @@ function downloadJson() {
   URL.revokeObjectURL(url);
 }
 
-$("composition-mode").addEventListener("change", updateCompositionMode);
-$("edit-text").addEventListener("input", updateCompositionMode);
-$("remove-text").addEventListener("input", updateCompositionMode);
 $("preview-button").addEventListener("click", previewReference);
 $("search-button").addEventListener("click", runSearch);
 $("download-json").addEventListener("click", downloadJson);
 loadMoreButton.addEventListener("click", renderMore);
-
-updateCompositionMode();

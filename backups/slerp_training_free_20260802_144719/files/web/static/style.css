@@ -41,11 +41,6 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .reuse-button { margin-top: 8px; width: 100%; }
 .pagination { text-align: center; margin-top: 18px; }
 @media (max-width: 900px) {
-  .reference-inputs, .settings-grid, .edit-fields-grid, .reference-panel, .method-grid { grid-template-columns: 1fr; }
+  .reference-inputs, .settings-grid, .edit-fields-grid, .reference-panel { grid-template-columns: 1fr; }
   .or { display: none; }
 }
-.method-grid { display: grid; grid-template-columns: minmax(260px, 1fr) 2fr; gap: 12px; margin-top: 14px; align-items: end; }
-select { border-radius: 8px; border: 1px solid #3a465b; background: #0f141d; color: #eef2f7; padding: 10px; }
-.intent-preview { border: 1px solid #30394a; border-radius: 8px; padding: 10px 12px; background: #0f141d; }
-.intent-preview code { display: block; margin-top: 6px; color: #dfe6ff; white-space: pre-wrap; overflow-wrap: anywhere; }
-[hidden] { display: none !important; }

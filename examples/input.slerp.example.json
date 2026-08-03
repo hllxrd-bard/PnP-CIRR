@@ -1,0 +1,14 @@
+{
+  "reference": {
+    "path": "/absolute/path/to/reference.webp"
+  },
+  "composition_mode": "slerp",
+  "edit_text": "pond",
+  "remove_text": "lotus flowers",
+  "slerp_alpha": 0.8,
+  "top_k": 60,
+  "use_vlm": false,
+  "deduplication": {
+    "enabled": true
+  }
+}
