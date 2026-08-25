@@ -1,0 +1,194 @@
+# Example CIR configuration.
+#
+# Copy to config.yaml and adjust for your environment. config.yaml itself is
+# gitignored, so this file is the tracked record of what a working setup looks
+# like -- keep the two in sync when you change something structural.
+#
+# INVARIANT: model.name_or_path and milvus.collection are a matched pair. The
+# model used at query time must be the same model that produced the collection's
+# gallery embeddings. Matching dimension alone is NOT sufficient -- embeddings
+# from different models are not comparable, and the resulting scores are
+# meaningless rather than merely worse.
+#
+#   google/siglip2-large-patch16-512  ->  multimodal_index_siglip_large_v3
+#
+# The database microservice (src/apps/database.py) serves the same _v3
+# collection, so entity ids are interoperable: an id returned by that service
+# can be passed straight to CIR as reference.id. Older unsuffixed collections
+# hold the same frames under DIFFERENT primary keys -- mixing them silently
+# breaks reference-by-id.
+
+runtime:
+  device: cuda
+  dtype: float16
+  hf_home: /workingspace_aiclub/WorkingSpace/Personal/chinhnm/AIC2026/.cache/huggingface
+  offline: false
+  seed: 42
+  log_level: INFO
+  warmup_text: "a person standing in a room"
+
+model:
+  name_or_path: google/siglip2-large-patch16-512
+  trust_remote_code: false
+  local_files_only: false
+  max_text_length: 64
+  # Must match the padding used to build the gallery embeddings.
+  # SigLIP2: max_length. CLIP-family (e.g. metaclip): true
+  text_padding: max_length
+  normalize_embeddings: true
+
+milvus:
+  uri: http://192.168.20.150:6050
+  token: null
+  database: default
+  # Pairs with model.name_or_path. Same collection the database microservice
+  # at :6090 serves, so entity ids interoperate across the two services.
+  collection: multimodal_index_siglip_large_v3
+  load_collection: true
+  consistency_level: Bounded
+  search:
+    metric_type: COSINE
+    params:
+      ef: 256
+  fields:
+    id: id
+    image_vector: image_embedding
+    text_vector: text_embedding
+    video_name: video_name
+    frame_name: frame_name
+    timestamp: timestamp
+    frame_id: frame_id
+    frame_specify: frame_specify
+    asr_id: asr_id
+    cluster_id: cluster_id
+    metadata: metadata
+  raw_text_paths:
+    - metadata.caption
+    - metadata.text
+    - metadata.asr
+    - metadata.ocr
+    - frame_specify
+
+frames:
+  root: /workingspace_aiclub/WorkingSpace/Personal/chinhnm/AIC2026/frames
+  path_template: "{frames_root}/{video_name}/{frame_name}.webp"
+  allowed_extensions: [.jpg, .jpeg, .png, .webp]
+
+composition:
+  # One explicit user-selected strength. It is never expanded to ±0.25.
+  default_edit_strength: 0.95
+  explicit_add_weight: 1.0
+  explicit_remove_weight: 1.0
+  use_reference_query: true
+  use_edit_text_query: true
+  use_explicit_query: true
+  epsilon: 1.0e-8
+
+slerp:
+  # Pure training-free paper mode: one SLERP query, then exact local cosine.
+  default_mode: directional
+  default_alpha: 0.8
+  candidate_k: 250
+  max_candidate_pool: 250
+  epsilon: 1.0e-8
+
+retrieval:
+  candidate_k_per_query: 150
+  max_candidate_pool: 700
+  default_top_k: 60
+  max_top_k: 300
+  exclude_reference: true
+  output_vector_fields: false
+  search_output_fields:
+    - id
+    - video_name
+    - frame_name
+    - timestamp
+    - frame_id
+    - cluster_id
+  entity_output_fields: []
+
+reranking:
+  # target now means similarity to the explicit Edit/Add field.
+  # In remove-only mode, target and metadata are disabled and the remaining
+  # positive weights are automatically renormalized.
+  weights:
+    composed: 0.25
+    target: 0.35
+    reference_keep: 0.10
+    direction: 0.25
+    metadata: 0.05
+  score_normalization: percentile
+  edit_gate:
+    enabled: true
+    target_weight: 0.55
+    direction_weight: 0.45
+    minimum_score: 0.40
+    penalty_weight: 0.25
+  negative_penalty_weight: 0.20
+  enable_negative_parser: false
+  negative_markers: []
+
+object_removal:
+  enabled: true
+  removal_penalty_weight: 0.35
+  max_remove_objects: 8
+  expand_aliases: true
+  max_expanded_remove_texts: 12
+  aliases:
+    hat: [cap, headwear]
+    mũ: [nón, headwear]
+    helmet: [protective helmet, headwear]
+    car: [automobile, vehicle]
+    xe ô tô: [ô tô, car, vehicle]
+    glasses: [eyeglasses, spectacles]
+    kính: [kính mắt, eyeglasses]
+    microphone: [mic]
+
+deduplication:
+  enabled: true
+  timestamp_window_seconds: 1.5
+  max_frames_per_video: 5
+  max_frames_per_cluster: null
+  prefer_higher_score: true
+
+vlm:
+  # Explicit mode never calls VLM unless the request sets use_vlm=true.
+  enabled_by_default: false
+  base_url: http://192.168.20.150:8018/v1
+  chat_completions_path: /chat/completions
+  api_key: null
+  model: Qwen3.5-9B-Q8_0.gguf
+  timeout_seconds: 20.0
+  temperature: 0.0
+  max_tokens: 256
+  enable_thinking: false
+  force_no_think_prompt: true
+  response_format_json: true
+  send_reference_image: true
+  image_detail: null
+  fallback_to_no_vlm: true
+  verify_tls: true
+  system_prompt: >-
+    Inspect the supplied reference image and return strict JSON with keys
+    source_description, operation, target_description, preserve, change,
+    remove_objects, negative. For object removal, put only removed visual
+    object names in remove_objects. Ignore television OCR, ticker text,
+    timestamps, filenames, and unrelated ASR. Do not return explanations
+    or Markdown. /no_think
+
+web:
+  host: 0.0.0.0
+  port: 8029
+  workers: 1
+  page_size: 30
+  title: Interactive CIR Viewer
+  allow_local_reference_path: true
+
+# Experimental training-free spherical remove mode.
+slerp_remove:
+  default_add_alpha: 0.4
+  default_gamma: 0.2
+  candidate_k: 250
+  max_candidate_pool: 250
+  epsilon: 1.0e-8

@@ -177,6 +177,25 @@ google/siglip2-large-patch16-512
 
 Model dùng lúc query phải khớp với model đã dùng để tạo gallery embedding trong Milvus. Chỉ cùng dimension là chưa đủ.
 
+### Cặp model ↔ collection
+
+`model.name_or_path` và `milvus.collection` là một cặp. Mỗi model có collection riêng:
+
+```text
+google/siglip2-large-patch16-512  ->  multimodal_index_siglip_large_v3
+```
+
+`model.text_padding` cũng phải khớp với cách gallery embedding được tạo:
+
+```text
+SigLIP2         text_padding: max_length   (max_text_length: 64)
+CLIP-family     text_padding: true         (max_text_length: 77)
+```
+
+Database microservice (`src/apps/database.py`, port `6090`) dùng đúng collection `_v3` này, nên entity id dùng chung được giữa hai service: id do service đó trả về có thể truyền thẳng vào CIR qua `reference.id`.
+
+Các collection cũ không có hậu tố `_v3` chứa cùng frame nhưng **primary key khác**. Trỏ sai collection sẽ làm `reference.id` fail âm thầm, trong khi `video_name` + `frame_name` và `path` vẫn chạy.
+
 ---
 
 ## 4. Cài đặt
@@ -219,7 +238,7 @@ Kiểm tra ít nhất các phần sau trong `config.yaml`:
 ```yaml
 milvus:
   uri: http://192.168.20.150:6050
-  collection: multimodal_index_siglip_large
+  collection: multimodal_index_siglip_large_v3
 
   fields:
     id: id

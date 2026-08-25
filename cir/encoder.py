@@ -43,6 +43,9 @@ class Siglip2Encoder:
 
         self.model_name = str(model_cfg["name_or_path"])
         self.max_text_length = int(model_cfg.get("max_text_length", 64))
+        # SigLIP2 pads to max_length; CLIP-family models pad to the longest item in
+        # the batch. This must match how the gallery embeddings were produced.
+        self.text_padding = model_cfg.get("text_padding", "max_length")
         self.normalize = bool(model_cfg.get("normalize_embeddings", True))
         self.trust_remote_code = bool(model_cfg.get("trust_remote_code", False))
         self.local_files_only = bool(model_cfg.get("local_files_only", False))
@@ -103,7 +106,7 @@ class Siglip2Encoder:
         with self._lock, torch.inference_mode():
             inputs = self._processor(
                 text=text_list,
-                padding="max_length",
+                padding=self.text_padding,
                 truncation=True,
                 max_length=self.max_text_length,
                 return_tensors="pt",

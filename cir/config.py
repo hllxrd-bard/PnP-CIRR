@@ -47,13 +47,18 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "trust_remote_code": False,
         "local_files_only": False,
         "max_text_length": 64,
+        # Must match the padding the gallery encoder used when the collection was
+        # built. SigLIP2 pads to max_length; CLIP-family models use True.
+        "text_padding": "max_length",
         "normalize_embeddings": True,
     },
     "milvus": {
         "uri": "http://192.168.20.150:6050",
         "token": None,
         "database": "default",
-        "collection": "multimodal_index_siglip_large_full",
+        # Pairs with model.name_or_path above. The query model must be the same
+        # model that produced this collection's embeddings.
+        "collection": "multimodal_index_siglip_large_v3",
         "load_collection": True,
         "consistency_level": "Bounded",
         "search": {
@@ -69,6 +74,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "timestamp": "timestamp",
             "frame_id": "frame_id",
             "frame_specify": "frame_specify",
+            "asr_id": "asr_id",
             "cluster_id": "cluster_id",
             "metadata": "metadata",
         },
