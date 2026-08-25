@@ -407,3 +407,114 @@ with httpx.Client(base_url="http://cir-service:8088", timeout=10.0) as client:
 ## 14. Legacy viewer
 
 `visualize.py` và các endpoint `/api/*` hiện tại không bị thay đổi. `service.py` là entrypoint riêng cho backend integration. Điều này giúp service contract ổn định mà không làm hỏng web viewer đang dùng để debug.
+
+## 15. Upstream dependency: vector endpoints cần có ở database microservice
+
+Phần này mô tả các endpoint mà **database microservice** (`src/apps/database.py`, port `6090`) cần bổ sung để CIR có thể chạy với `milvus.backend: service` thay vì kết nối thẳng Milvus.
+
+### 15.1. Tại sao các endpoint hiện tại không dùng được
+
+Database microservice hiện có 15 route. `/v1/search/text` nhận string, `/v1/search/image` nhận file ảnh, cả hai đều encode ở phía server và trả về hit không kèm embedding.
+
+CIR không dùng được cả hai vì:
+
+1. CIR tự tạo query vector ở local — `normalize(reference + strength * direction)` hoặc SLERP. Vector tổng hợp này không biểu diễn được bằng text hay ảnh, nên không truyền qua hai endpoint trên được.
+2. CIR rerank bằng exact cosine trên `image_embedding` của candidate. Không endpoint nào trả embedding về.
+
+Vì vậy cần đúng hai endpoint: một để search bằng vector cho sẵn, một để đọc entity kèm vector.
+
+### 15.2. `POST /v1/search/vector`
+
+```json
+{
+  "model_name": "google/siglip2-large-patch16-512",
+  "vectors": [[0.013, -0.052, "..."]],
+  "anns_field": "image_embedding",
+  "metric_type": "COSINE",
+  "top_k": 150,
+  "expr": "video_name in [\"L30_V091\"]",
+  "output_fields": ["id", "video_name", "frame_name", "timestamp", "frame_id", "cluster_id"]
+}
+```
+
+Response, một list kết quả cho mỗi vector trong `vectors`:
+
+```json
+{
+  "status": "success",
+  "results": [
+    [
+      {"id": 468286202123274139, "distance": 0.8891,
+       "entity": {"video_name": "L30_V091", "frame_name": "frame_059"}}
+    ]
+  ],
+  "latency_ms": 12.4
+}
+```
+
+`vectors` là batch để khớp semantic của Milvus và shape mà CIR đang chờ. `expr` là Milvus boolean expression, có thể `null`.
+
+### 15.3. `POST /v1/entities/fetch`
+
+Nhận **hoặc** `ids`, **hoặc** `filter`. CIR cần cả hai dạng: `ids` cho candidate fetch lúc rerank, `filter` cho reference lookup theo `video_name` + `frame_name`.
+
+```json
+{
+  "model_name": "google/siglip2-large-patch16-512",
+  "ids": [468286202123274139],
+  "filter": null,
+  "limit": null,
+  "include_vectors": true,
+  "output_fields": null
+}
+```
+
+Response:
+
+```json
+{
+  "status": "success",
+  "entities": [
+    {
+      "id": 468286202123274139,
+      "video_name": "L30_V091",
+      "frame_name": "frame_059",
+      "frame_id": 4030,
+      "timestamp": 161.2,
+      "cluster_id": "513",
+      "image_embedding": [0.013, -0.052, "..."],
+      "text_embedding": [0.008, 0.041, "..."]
+    }
+  ]
+}
+```
+
+Đây là shape thật sự mới — hiện không route nào trả embedding.
+
+### 15.4. Ghi chú triển khai
+
+Cả hai đều là wrapper mỏng trên phần đã có sẵn:
+
+- `src/core/database/milvus/searcher.py:81,111-112` đã nhận `precomputed_vector=` và bỏ qua bước encode khi được truyền vào. Chỉ là chưa có route HTTP nào chạm tới.
+- `searcher.py:629` đã dùng `col.query(expr=..., limit=..., output_fields=[...])`, đúng thứ `/v1/entities/fetch` cần cho nhánh `filter`.
+- `FrameResultHit` trong `src/apps/database.py:95-112` dùng lại được cho `/v1/search/vector`.
+
+Yêu cầu quan trọng: `output_fields` phải cho phép chứa tên field vector, và giá trị vector phải trả về dạng list số, không bị lược bỏ.
+
+### 15.5. Phía CIR
+
+`cir/service_store.py` đã implement sẵn client cho đúng hai endpoint này. Khi service chưa có, CIR fail ngay lúc khởi tạo kèm danh sách endpoint còn thiếu, thay vì lỗi 404 giữa chừng một request search.
+
+Bật bằng:
+
+```yaml
+milvus:
+  backend: service
+  service:
+    base_url: http://192.168.20.150:6090
+    model_name: google/siglip2-large-patch16-512
+    timeout_seconds: 30.0
+    embedding_dim: 1024
+```
+
+Lưu ý host là `192.168.20.150`, không phải `127.0.0.1`. Script chạy service dùng `--database-url http://127.0.0.1:6090` chỉ đúng khi chạy ngay trên máy đó.

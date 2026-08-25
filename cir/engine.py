@@ -10,8 +10,8 @@ import numpy as np
 from .config import AppConfig
 from .deduplicator import CandidateDeduplicator
 from .encoder import Siglip2Encoder
-from .milvus_store import MilvusStore
 from .query_composer import QueryComposer
+from .store_base import build_store
 from .reranker import VectorReranker
 from .slerp_method.pipeline import search_slerp
 from .slerp_method.remove_pipeline import search_slerp_remove
@@ -38,7 +38,7 @@ LOGGER = logging.getLogger(__name__)
 class CIREngine:
     def __init__(self, config: AppConfig, warmup: bool = False):
         self.config = config
-        self.store = MilvusStore(config)
+        self.store = build_store(config)
         self.encoder = Siglip2Encoder(config)
         self.composer = QueryComposer(config)
         self.reranker = VectorReranker(config)

@@ -105,7 +105,9 @@ cir/
 │   ├── config.py                   Load và validate YAML config
 │   ├── schemas.py                  Pydantic request/response models
 │   ├── encoder.py                  SigLIP2 image/text encoding
-│   ├── milvus_store.py             Lookup, ANN search và fetch Milvus entities
+│   ├── store_base.py               FrameStore protocol và build_store() factory
+│   ├── milvus_store.py             Store backend direct: pymilvus tới Milvus
+│   ├── service_store.py            Store backend service: HTTP tới database microservice
 │   ├── query_composer.py           Tạo explicit add/remove query
 │   ├── reranker.py                 Vector reranking và removal penalty
 │   ├── deduplicator.py             Loại frame gần trùng
@@ -194,6 +196,17 @@ CLIP-family     text_padding: true         (max_text_length: 77)
 
 Database microservice (`src/apps/database.py`, port `6090`) dùng đúng collection `_v3` này, nên entity id dùng chung được giữa hai service: id do service đó trả về có thể truyền thẳng vào CIR qua `reference.id`.
 
+### Store backend
+
+`milvus.backend` chọn nơi CIR đọc dữ liệu:
+
+```text
+direct    pymilvus kết nối thẳng Milvus. Mặc định, đang dùng.
+service   HTTP tới database microservice.
+```
+
+`service` cần hai endpoint mà microservice **chưa có** (`/v1/search/vector` và `/v1/entities/fetch`); xem `docs/CIR_SERVICE_API.md` mục 15. Khi thiếu, CIR báo lỗi ngay lúc khởi tạo kèm tên endpoint còn thiếu chứ không fail giữa request.
+
 Các collection cũ không có hậu tố `_v3` chứa cùng frame nhưng **primary key khác**. Trỏ sai collection sẽ làm `reference.id` fail âm thầm, trong khi `video_name` + `frame_name` và `path` vẫn chạy.
 
 ---
@@ -237,6 +250,7 @@ Kiểm tra ít nhất các phần sau trong `config.yaml`:
 
 ```yaml
 milvus:
+  backend: direct
   uri: http://192.168.20.150:6050
   collection: multimodal_index_siglip_large_v3
 

@@ -38,6 +38,22 @@ model:
   normalize_embeddings: true
 
 milvus:
+  # Storage backend for the retrieval pipeline.
+  #   direct  - pymilvus straight to Milvus (uri below). Default.
+  #   service - HTTP to the database microservice. Needs the vector endpoints
+  #             described in docs/CIR_SERVICE_API.md, which it does not expose
+  #             yet; CIR fails fast at startup with that list if they are absent.
+  backend: direct
+  service:
+    # Note this host, not 127.0.0.1 -- the service runs on 192.168.20.150 and
+    # is only reachable as localhost from that machine itself.
+    base_url: http://192.168.20.150:6090
+    model_name: google/siglip2-large-patch16-512
+    timeout_seconds: 30.0
+    # No schema endpoint exists, so the image vector dimension is declared here.
+    # Keep it in step with the model.
+    embedding_dim: 1024
+
   uri: http://192.168.20.150:6050
   token: null
   database: default

@@ -53,6 +53,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "normalize_embeddings": True,
     },
     "milvus": {
+        # direct: pymilvus straight to Milvus. service: HTTP to the database
+        # microservice, which needs vector endpoints it does not expose yet.
+        "backend": "direct",
+        "service": {
+            "base_url": "http://192.168.20.150:6090",
+            "model_name": "google/siglip2-large-patch16-512",
+            "timeout_seconds": 30.0,
+            "embedding_dim": 1024,
+        },
         "uri": "http://192.168.20.150:6050",
         "token": None,
         "database": "default",
