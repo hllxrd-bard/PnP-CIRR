@@ -6,3 +6,10 @@ config.yaml
 outputs/
 hf_cache/
 milvus_inspection.json
+
+.claude/
+tmp/
+backups/
+*.bak
+*.pat
+.git-credentials

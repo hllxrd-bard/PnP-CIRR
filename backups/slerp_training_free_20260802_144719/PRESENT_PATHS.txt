@@ -1,9 +1,0 @@
-cir/engine.py
-cir/schemas.py
-cir/config.py
-config.yaml
-visualize.py
-web/templates/index.html
-web/static/app.js
-web/static/style.css
-README.md

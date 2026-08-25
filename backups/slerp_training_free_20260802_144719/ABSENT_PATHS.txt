@@ -1,3 +1,0 @@
-cir/slerp_method
-tests/test_slerp.py
-examples/input.slerp.example.json
