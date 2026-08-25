@@ -178,9 +178,12 @@ class MilvusStore:
         limit: int,
         expression: str | None = None,
     ) -> list[list[dict[str, Any]]]:
+        raw_params = dict(self.search_cfg.get("params", {}))
+        ef_val = max(int(limit), int(raw_params.get("ef", 128)))
+        raw_params["ef"] = ef_val
         params = {
             "metric_type": self.search_cfg.get("metric_type", "COSINE"),
-            "params": self.search_cfg.get("params", {}),
+            "params": raw_params,
         }
         kwargs: dict[str, Any] = {
             "collection_name": self.collection,

@@ -1,0 +1,13 @@
+{
+  "reference": {"id": 123456},
+  "composition_mode": "directional",
+  "edit_text": "helmet",
+  "remove_text": "hat",
+  "top_k": 60,
+  "filters": {
+    "exclude_reference": true,
+    "include_video_prefixes": [],
+    "exclude_video_prefixes": [],
+    "exclude_video_names": []
+  }
+}

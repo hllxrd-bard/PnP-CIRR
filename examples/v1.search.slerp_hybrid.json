@@ -1,0 +1,9 @@
+{
+  "reference": {"id": 123456},
+  "composition_mode": "slerp_hybrid",
+  "edit_text": "pond with green leaves",
+  "remove_text": "pink lotus flowers",
+  "slerp_alpha": 0.4,
+  "slerp_hybrid_gamma": 0.2,
+  "top_k": 60
+}

@@ -1,0 +1,7 @@
+{
+  "reference": {"id": 123456},
+  "composition_mode": "pure_slerp",
+  "edit_text": "an open pond with clear water",
+  "slerp_alpha": 0.8,
+  "top_k": 60
+}
