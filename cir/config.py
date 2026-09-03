@@ -230,7 +230,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "web": {
         "host": "0.0.0.0",
-        "port": 8088,
+        # Must match the container port Docker publishes, or the service binds
+        # somewhere nothing outside can reach.
+        "port": 8068,
         "workers": 1,
         "page_size": 30,
         "title": "Interactive CIR Viewer",

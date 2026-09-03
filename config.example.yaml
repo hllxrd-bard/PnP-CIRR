@@ -203,7 +203,10 @@ vlm:
 
 web:
   host: 0.0.0.0
-  port: 8029
+  # Must match the container port published by Docker (host 8068 -> container
+  # 8068), otherwise the service binds a port nothing outside can reach.
+  # Clients use http://192.168.20.150:8068
+  port: 8068
   workers: 1
   page_size: 30
   title: Interactive CIR Viewer
