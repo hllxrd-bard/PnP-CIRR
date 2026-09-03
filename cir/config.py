@@ -37,6 +37,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "device": "cuda",
         "dtype": "float16",
         "hf_home": None,
+        # Where non-HuggingFace downloads land. Both default to sitting beside
+        # hf_home, so setting hf_home alone is usually enough.
+        "cache_home": None,
+        "torch_home": None,
         "offline": False,
         "seed": 42,
         "log_level": "INFO",
@@ -270,6 +274,23 @@ def load_config(path: str | Path) -> AppConfig:
     hf_home = merged["runtime"].get("hf_home")
     if hf_home:
         os.environ["HF_HOME"] = str(hf_home)
+
+    # Keep every model/asset download on the shared project volume rather than
+    # in the container's own layer, which is lost when the container is
+    # rebuilt. torch_home covers torch.hub; cache_home is the catch-all other
+    # libraries read via XDG. Both default to sitting beside hf_home.
+    cache_home = merged["runtime"].get("cache_home")
+    torch_home = merged["runtime"].get("torch_home")
+    if not cache_home and hf_home:
+        cache_home = str(Path(hf_home).parent)
+    if not torch_home and cache_home:
+        torch_home = str(Path(cache_home) / "torch")
+    if cache_home:
+        os.environ["XDG_CACHE_HOME"] = str(cache_home)
+    if torch_home:
+        Path(torch_home).mkdir(parents=True, exist_ok=True)
+        os.environ["TORCH_HOME"] = str(torch_home)
+
     if merged["runtime"].get("offline", False):
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"

@@ -21,7 +21,15 @@
 runtime:
   device: cuda
   dtype: float16
-  hf_home: /workingspace_aiclub/WorkingSpace/Personal/chinhnm/AIC2026/.cache/huggingface
+  # Point at the shared project volume, not the container layer, so models
+  # survive a container rebuild. This root already holds siglip2-large and
+  # metaclip-2-worldwide-huge-quickgelu, so neither is re-downloaded.
+  hf_home: /workingspace_aiclub/WorkingSpace/Personal/chinhnm/AIC2026/.cache
+  # torch.hub and the XDG catch-all. Default to sitting beside hf_home.
+  cache_home: /workingspace_aiclub/WorkingSpace/Personal/chinhnm/AIC2026/.cache
+  torch_home: /workingspace_aiclub/WorkingSpace/Personal/chinhnm/AIC2026/.cache/torch
+  # Stays online: the Hub is checked at startup for model metadata. Weights are
+  # served from the cache above, so this costs latency, not bandwidth.
   offline: false
   seed: 42
   log_level: INFO
